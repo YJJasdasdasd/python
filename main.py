@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from bs4 import BeautifulSoup
+
 options = Options()
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
@@ -9,7 +10,7 @@ browser = webdriver.Chrome(options=options)
 
 
 def get_page_count(keyword):
-    base_url = "https://kr.indeed.com/jobs?q="
+    base_url = "https://www.indeed.com/jobs?q="
     browser.get(f"{base_url}{keyword}")
 
     soup = BeautifulSoup(browser.page_source, "html.parser")
@@ -24,11 +25,12 @@ def get_page_count(keyword):
 
 def extract_indeed_jobs(keyword):
     pages = get_page_count(keyword)
+    results = []
     for page in range(pages):
-        base_url = "https://kr.indeed.com/jobs?q="
-        browser.get(f"{base_url}{keyword}")
-        results = []
-        soup = BeautifulSoup(browser.page_source, "html.parser")
+        base_url = "https://www.indeed.com/jobs"
+        final_url = browser.get(f"{base_url}?q={keyword}&start={page*10}")
+        response = browser.get(final_url)
+        soup = BeautifulSoup(response.page_source, "html.parser")
         job_list = soup.find("ul", class_="jobsearch-ResultsList")
         jobs = job_list.find_all("li", recursive=False)
         for job in jobs:
@@ -46,5 +48,9 @@ def extract_indeed_jobs(keyword):
                 'position': title
             }
             results.append(job_data)
-        for result in results:
-            print(result, "\n/////////////\n")
+    return results
+
+
+jobs = extract_indeed_jobs("python")
+
+print(len(jobs))
